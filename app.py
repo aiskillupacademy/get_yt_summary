@@ -50,8 +50,8 @@ def get_transcript(video_id):
     try:
         transcript = yta.get_transcript(video_id, languages=language_codes)
         return transcript
-    except:
-        return "Transcript not found. Try another video URL."
+    except Exception as e:
+        return e
 
 st.title("Get Youtube Video Summary")
 
@@ -74,6 +74,7 @@ url = st.text_input("Add Youtube Link")
 if st.button("Get Summary"):
     video_id = url.split("v=")[1]
     transcript = get_transcript(video_id)
+    st.write(transcript)
     if transcript != "Transcript not found. Try another video URL.":
         data = [t['text'] for t in transcript]
 
