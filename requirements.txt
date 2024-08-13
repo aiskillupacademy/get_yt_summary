@@ -1,4 +1,4 @@
-youtube_transcript_api
+youtube-transcript-api
 langchain
 langchain-core
 langchain-groq
