@@ -74,7 +74,6 @@ url = st.text_input("Add Youtube Link")
 if st.button("Get Summary"):
     video_id = url.split("v=")[1]
     transcript = get_transcript(video_id)
-    st.write(transcript)
     if transcript != "Transcript not found. Try another video URL.":
         data = [t['text'] for t in transcript]
 
