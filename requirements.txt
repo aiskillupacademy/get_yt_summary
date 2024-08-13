@@ -4,5 +4,3 @@ langchain-core
 langchain-groq
 langchain-openai
 sreamlit
-re
-os
