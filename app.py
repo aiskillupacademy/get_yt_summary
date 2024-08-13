@@ -48,7 +48,7 @@ def get_summary(text):
 
 def get_transcript(video_id):
     try:
-        transcript = yta.get_transcript(video_id, languages=language_codes)
+        transcript = yta.get_transcript(video_id, languages=language_codes, proxies={"https": "http://localhost:8501/"})
         return transcript
     except Exception as e:
         return e
