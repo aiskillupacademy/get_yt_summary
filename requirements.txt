@@ -3,4 +3,4 @@ langchain
 langchain-core
 langchain-groq
 langchain-openai
-sreamlit
+streamlit
