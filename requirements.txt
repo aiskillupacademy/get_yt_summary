@@ -1,0 +1,8 @@
+youtube_transcript_api
+langchain
+langchain-core
+langchain-groq
+langchain-openai
+sreamlit
+re
+os
