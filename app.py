@@ -53,6 +53,41 @@ def get_transcript(video_id):
     except Exception as e:
         return e
 
+def extract_transcripts(transcript):
+    t = []
+    start = 0
+    end = transcript.rfind(":")
+    flag = 0
+    t_start = 0
+    t_end = 0
+    while(flag==0):
+        pos = transcript.find(":", start)
+        if pos>=2:
+            if transcript[pos-2]==" ":
+                t_start = pos-1
+            else:
+                t_start = pos-2
+        else:
+            t_start = pos-1
+        if transcript[pos+3]==":":
+            t_end = pos+6
+            n_pos = transcript.find(":", transcript.find(":", pos+1)+1)
+            if n_pos!=-1:
+                start = n_pos
+            else:
+                flag=1
+        else:
+            t_end = pos+3
+            n_pos = transcript.find(":", pos+1)
+            start = pos+1
+        t1 = {}
+        t1["text"] = transcript[t_end+1:n_pos-2]
+        t1["start"] = transcript[t_start:t_end]
+        t.append(t1)
+        if pos >=end:
+            flag=1
+    return t
+
 st.title("Get Youtube Video Summary")
 
 language_codes = [
@@ -70,62 +105,65 @@ language_codes = [
     "uz", "ve", "vi", "war", "cy", "fy", "wo", "xh", "yi", "yo", "zu", "en-US"
 ]
 url = st.text_input("Add Youtube Link")
+transcripts = st.text_input("Give transcripts with timestamps")
 # url = "https://www.youtube.com/watch?v=6Nr0_lZScug"
 if st.button("Get Summary"):
-    video_id = url.split("v=")[1]
-    transcript = get_transcript(video_id)
-    st.write(transcript)
-    if transcript != "Transcript not found. Try another video URL.":
-        data = [t['text'] for t in transcript]
+    # video_id = url.split("v=")[1]
+    # transcript = get_transcript(video_id)
+    # st.write(transcript)
+    # if transcript != "Transcript not found. Try another video URL.":
+    #     data = [t['text'] for t in transcript]
 
-        total_timestamps = 0.013*len(data) + 6
-        template = """
-        You will be given a list if text. It is a transcripts from a youtube video.
-        list of text: {data}
-        length of the list: {length}
-        Your task is to find sub topics form the list of data so that I can combine some parts of the data into one in order.
-        Also give, in order, the index of the lists till which it should be combined. Response should be a comma separated python list which should have only the starting indexes.
-        Make sure you consider all the indexes from the list of data (the length is also provided).
-        Try to divide the data as equally as possible.
-        The index list you give should be of length {total_timestamps}.
-        Give only response as output and no header or footer.
-        """
-        prompt = ChatPromptTemplate.from_template(template)
-        llm = ChatGroq(model="llama-3.1-70b-versatile")
-        chain = prompt | llm
-        res = chain.invoke({"data": data, "length": len(data), "total_timestamps": int(total_timestamps)})
-        lst = res.content.split(',')
-        new_data = []
-        new_timestamps = []
-        temp_string = ""
-        j = 1
-        for i in range(len(data)):
-            if i<int(lst[j]):
-                temp_string += f" {data[i]}."
-            else:
-                temp_string = re.sub(r'\xa0\xa0', ' ', temp_string)
-                temp_string = re.sub(r'\xa0', ' ', temp_string)
-                temp_string = re.sub(r'\n', ' ', temp_string)
-                new_data.append(temp_string)
-                new_timestamps.append(transcript[i-1]['start'])
-                temp_string = data[i]
-                if j<len(lst)-1:
-                    j += 1
-                else:
-                    break
-        for i in range(int(lst[j])+1, len(data)):
+    transcript = extract_transcripts(transcripts)
+    data = [t['text'] for t in transcript]
+    total_timestamps = 0.013*len(data) + 6
+    template = """
+    You will be given a list if text. It is a transcripts from a youtube video.
+    list of text: {data}
+    length of the list: {length}
+    Your task is to find sub topics form the list of data so that I can combine some parts of the data into one in order.
+    Also give, in order, the index of the lists till which it should be combined. Response should be a comma separated python list which should have only the starting indexes.
+    Make sure you consider all the indexes from the list of data (the length is also provided).
+    Try to divide the data as equally as possible.
+    The index list you give should be of length {total_timestamps}.
+    Give only response as output and no header or footer.
+    """
+    prompt = ChatPromptTemplate.from_template(template)
+    llm = ChatGroq(model="llama-3.1-70b-versatile")
+    chain = prompt | llm
+    res = chain.invoke({"data": data, "length": len(data), "total_timestamps": int(total_timestamps)})
+    lst = res.content.split(',')
+    new_data = []
+    new_timestamps = []
+    temp_string = ""
+    j = 1
+    for i in range(len(data)):
+        if i<int(lst[j]):
             temp_string += f" {data[i]}."
-        temp_string = re.sub(r'\xa0\xa0', ' ', temp_string)
-        temp_string = re.sub(r'\xa0', ' ', temp_string)
-        temp_string = re.sub(r'\n', ' ', temp_string)
-        new_data.append(temp_string)
-        new_timestamps.append(transcript[-1]['start'])
-        summary = ""
-        full_summ = get_summary(new_data)
-        for i in range(len(new_data)):
-            summ = full_summ[f'qa{i+1}'].content
-            time1 = get_time(new_timestamps[i])
-            summary = summary + f"\n\n {summ}. ({time1}) \n\n"
-        st.write(summary)
-    else:
-        st.write("Transcript not found. Try another video URL.")
+        else:
+            temp_string = re.sub(r'\xa0\xa0', ' ', temp_string)
+            temp_string = re.sub(r'\xa0', ' ', temp_string)
+            temp_string = re.sub(r'\n', ' ', temp_string)
+            new_data.append(temp_string)
+            new_timestamps.append(transcript[i-1]['start'])
+            temp_string = data[i]
+            if j<len(lst)-1:
+                j += 1
+            else:
+                break
+    for i in range(int(lst[j])+1, len(data)):
+        temp_string += f" {data[i]}."
+    temp_string = re.sub(r'\xa0\xa0', ' ', temp_string)
+    temp_string = re.sub(r'\xa0', ' ', temp_string)
+    temp_string = re.sub(r'\n', ' ', temp_string)
+    new_data.append(temp_string)
+    new_timestamps.append(transcript[-1]['start'])
+    summary = ""
+    full_summ = get_summary(new_data)
+    for i in range(len(new_data)):
+        summ = full_summ[f'qa{i+1}'].content
+        # time1 = get_time(new_timestamps[i])
+        summary = summary + f"\n\n {summ}. ({new_timestamps[i]}) \n\n"
+    st.write(summary)
+    # else:
+    #     st.write("Transcript not found. Try another video URL.")
