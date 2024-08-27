@@ -176,8 +176,8 @@ if st.button("Get Summary"):
         st.header(f"Title: {title}")
         st.write(f"Publish Date: {date}")
         st.image(thumbnail)
-    except:
-        pass
+    except Exception as e:
+        st.write(e)
     st.write(summary)
     # else:
     #     st.write("Transcript not found. Try another video URL.")
