@@ -1,4 +1,6 @@
 from youtube_transcript_api import YouTubeTranscriptApi as yta
+from pytubefix import YouTube
+from pytubefix.cli import on_progress
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
@@ -164,6 +166,18 @@ if st.button("Get Summary"):
         summ = full_summ[f'qa{i+1}'].content
         # time1 = get_time(new_timestamps[i])
         summary = summary + f"\n\n {summ}. ({new_timestamps[i]}) \n\n"
+
+    try:
+        yt = YouTube(url, on_progress_callback = on_progress)
+        title = yt.title
+        desc = yt.description
+        thumbnail = yt.thumbnail_url
+        date = yt.publish_date
+        st.header(f"Title: {title}")
+        st.write(f"Publish Date: {date}")
+        st.image(thumbnail)
+    except:
+        pass
     st.write(summary)
     # else:
     #     st.write("Transcript not found. Try another video URL.")
